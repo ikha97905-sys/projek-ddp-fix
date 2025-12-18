@@ -1,0 +1,159 @@
+import streamlit as st
+
+
+#  HALAMAN
+
+st.set_page_config(page_title="Absensi Kehadiran", page_icon="📝")
+st.title("Aplikasi Absensi Kehadiran")
+
+# PENYIMPANAN DATA
+if "absen" not in st.session_state:
+    st.session_state.absen = []
+
+
+# CLASS ABSENSI
+
+class Absensi:
+    def __init__(self, nama, kelas, pelajaran, tanggal, waktu, status):
+        self.nama = nama
+        self.kelas = kelas
+        self.pelajaran = pelajaran
+        self.tanggal = str(tanggal)
+        self.waktu = waktu
+        self.status = status
+
+
+# FUNCTION 
+
+def simpan_absensi(data):
+    st.session_state.absen.append({
+        "Nama": data.nama,
+        "Kelas": data.kelas,
+        "Pelajaran": data.pelajaran,
+        "Tanggal": data.tanggal,
+        "Waktu": data.waktu,
+        "Status": data.status
+    })
+
+
+# MENU 
+
+menu = st.sidebar.selectbox(
+    "Menu",
+    ["Login", "Presensi Kehadiran", "Cek Kehadiran", "Rekap Absensi"]
+)
+
+
+# PAGE 1 : LOGIN
+
+# LOGIN: NAMA & PASSWORD DLL
+
+if menu == "Login":
+    st.image("https://th.bing.com/th/id/OIP.iIkF4c0ykhIIGz7KJUvEegHaHa?w=210&h=210&c=7&r=0&o=7&cb=ucfimg2&pid=1.7&rm=3&ucfimg=1")
+    
+    st.subheader("Login Siswa")
+
+    username = st.text_input("Nama Siswa")
+    password = st.text_input("Password", type="password")
+    nim = st.text_input("Nim")
+    rombel = st.selectbox("Rombel", ["4","5","6"])
+    
+
+    if st.button("Login"):
+        if username != "" and nim and password and rombel!= "":
+            st.success(f"Login berhasil! Selamat datang {username} {nim}")
+            st.session_state["login_user"] = username
+        else:
+            st.error("Pastikan!! username,password,nim,rombel telah di isi dengan benar !")
+
+# PAGE 2 : PRESENSI
+
+elif menu == "Presensi Kehadiran":
+    st.image("https://tse2.mm.bing.net/th/id/OIP.sxc4nZY1BgP0XEFHrTTvfQHaHa?pid=Api&P=0&h=220")
+    
+    st.subheader("Form Presensi Kehadiran")
+
+    nama = st.text_input("Nama Lengkap")
+    kelas = st.selectbox("Kelas", ["1","2","3","4","5","6","7","8","9","10","11","12"])
+    pelajaran = st.selectbox(
+        "Pelajaran",
+        ["Matematika", "IPA", "IPS", "Bahasa Indonesia", "Bahasa Inggris"]
+    )
+    tanggal = st.date_input("Tanggal")
+    waktu = st.time_input("Waktu")
+    status = st.selectbox("Status Kehadiran", ["Hadir", "Sakit", "Izin", "Alpa"])
+
+    if st.button("Simpan Presensi"):
+        data_absen = Absensi(nama, kelas, pelajaran, tanggal, waktu, status)
+        simpan_absensi(data_absen)
+        st.success("Data presensi berhasil disimpan")
+
+
+# PAGE 3 : CEK KEHADIRAN
+
+elif menu == "Cek Kehadiran":
+    st.image("https://tse4.mm.bing.net/th/id/OIP.0D9pxyp6Ck-CunrSwP2TrwHaDt?pid=Api&P=0&h=220")
+    st.subheader("Data Kehadiran Siswa")
+
+    if len(st.session_state.absen) == 0:
+        st.info("Belum ada data absensi")
+    else:
+        filter_kelas = st.selectbox(
+            "Filter Kelas",
+            ["Semua","1","2","3","4","5","6","7","8","9","10","11","12"]
+        )
+
+        filter_status = st.selectbox(
+            "Filter Status",
+            ["Semua","Hadir","Sakit","Izin","Alpa"]
+        )
+
+        hasil = []
+
+        # LOOPING DATA
+        for data in st.session_state.absen:
+            if (filter_kelas == "Semua" or data["Kelas"] == filter_kelas) and \
+               (filter_status == "Semua" or data["Status"] == filter_status):
+                hasil.append(data)
+
+        if len(hasil) == 0:
+            st.warning("Data tidak ditemukan")
+        else:
+            st.table(hasil)
+
+
+# PAGE 4 : REKAP ABSENSI
+
+elif menu == "Rekap Absensi":
+    st.image ("https://tse1.mm.bing.net/th/id/OIP.VXtGTtq_YwRQJd3E9QPu6AHaHa?pid=Api&P=0&h=220")
+    st.subheader("Rekap Absensi Siswa")
+
+    pilihan = st.selectbox(
+        "Pilih Rekapan",
+        ["Harian", "Bulanan", "Tahunan"]
+    )
+
+    rekap = []
+
+    if pilihan == "Harian":
+        tanggal = st.date_input("Pilih Tanggal")
+        for data in st.session_state.absen:
+            if data["Tanggal"] == str(tanggal):
+                rekap.append(data)
+
+    elif pilihan == "Bulanan":
+        bulan = st.selectbox("Pilih Bulan", list(range(1, 13)))
+        for data in st.session_state.absen:
+            if int(data["Tanggal"].split("-")[1]) == bulan:
+                rekap.append(data)
+
+    elif pilihan == "Tahunan":
+        tahun = st.number_input("Masukkan Tahun", min_value=2000, max_value=2100)
+        for data in st.session_state.absen:
+            if int(data["Tanggal"].split("-")[0]) == tahun:
+                rekap.append(data)
+
+    if len(rekap) == 0:
+        st.info("Tidak ada data untuk rekapan ini")
+    else:
+        st.table(rekap)
